@@ -12,6 +12,7 @@ require "active_record/connection_adapters/postgresql/explain_pretty_printer"
 require "active_record/connection_adapters/postgresql/oid"
 require "active_record/connection_adapters/postgresql/quoting"
 require "active_record/connection_adapters/postgresql/referential_integrity"
+require "active_record/connection_adapters/postgresql/schema_cache"
 require "active_record/connection_adapters/postgresql/schema_creation"
 require "active_record/connection_adapters/postgresql/schema_definitions"
 require "active_record/connection_adapters/postgresql/schema_dumper"
@@ -237,6 +238,10 @@ module ActiveRecord
 
       def index_algorithms
         { concurrently: "CONCURRENTLY" }
+      end
+
+      def init_schema_cache
+        PostgreSQL::SchemaCache.new(self)
       end
 
       class StatementPool < ConnectionAdapters::StatementPool # :nodoc:
@@ -484,6 +489,36 @@ module ActiveRecord
         end
       end
 
+      TYPE_QUERY_PREFIX = <<~SQL
+        SELECT t.oid, t.typname, t.typelem, t.typdelim, t.typinput, r.rngsubtype, t.typtype, t.typbasetype
+        FROM pg_type as t
+        LEFT JOIN pg_range as r ON oid = rngtypid
+      SQL
+
+      def additional_type_records
+        additional_type_queries do |query|
+          execute_and_clear(query, "SCHEMA", []) { |records| yield records.to_a }
+        end
+      end
+
+      def additional_type_queries
+        initializer = OID::TypeMapInitializer.new(type_map)
+
+        yield TYPE_QUERY_PREFIX + initializer.query_conditions_for_known_type_names
+        yield TYPE_QUERY_PREFIX + initializer.query_conditions_for_known_type_types
+        yield TYPE_QUERY_PREFIX + initializer.query_conditions_for_array_types
+      end
+
+      def known_coder_type_records
+        known_coder_types = CODERS_BY_NAME.keys.map { |n| quote(n) }
+        query = <<~SQL % known_coder_types.join(", ")
+          SELECT t.oid, t.typname
+          FROM pg_type as t
+          WHERE t.typname IN (%s)
+        SQL
+        execute_and_clear(query, "SCHEMA", []) { |records| return records.to_a }
+      end
+
       private
         # See https://www.postgresql.org/docs/current/static/errcodes-appendix.html
         VALUE_LIMIT_VIOLATION = "22001"
@@ -615,6 +650,12 @@ module ActiveRecord
           load_additional_types
         end
 
+        def reload_type_map
+          schema_cache.clear_types!
+
+          super
+        end
+
         # Extracts the value from a PostgreSQL column default definition.
         def extract_value_from_default(default)
           case default
@@ -652,25 +693,17 @@ module ActiveRecord
 
         def load_additional_types(oids = nil)
           initializer = OID::TypeMapInitializer.new(type_map)
-          load_types_queries(initializer, oids) do |query|
+
+          if oids
+            query = TYPE_QUERY_PREFIX + "WHERE t.oid IN (%s)" % oids.join(", ")
+
             execute_and_clear(query, "SCHEMA", []) do |records|
               initializer.run(records)
             end
-          end
-        end
-
-        def load_types_queries(initializer, oids)
-          query = <<~SQL
-            SELECT t.oid, t.typname, t.typelem, t.typdelim, t.typinput, r.rngsubtype, t.typtype, t.typbasetype
-            FROM pg_type as t
-            LEFT JOIN pg_range as r ON oid = rngtypid
-          SQL
-          if oids
-            yield query + "WHERE t.oid IN (%s)" % oids.join(", ")
           else
-            yield query + initializer.query_conditions_for_known_type_names
-            yield query + initializer.query_conditions_for_known_type_types
-            yield query + initializer.query_conditions_for_array_types
+            schema_cache.additional_type_records do |records|
+              initializer.run(records)
+            end
           end
         end
 
@@ -925,31 +958,25 @@ module ActiveRecord
           end
         end
 
+        CODERS_BY_NAME = {
+          "int2" => PG::TextDecoder::Integer,
+          "int4" => PG::TextDecoder::Integer,
+          "int8" => PG::TextDecoder::Integer,
+          "oid" => PG::TextDecoder::Integer,
+          "float4" => PG::TextDecoder::Float,
+          "float8" => PG::TextDecoder::Float,
+          "numeric" => PG::TextDecoder::Numeric,
+          "bool" => PG::TextDecoder::Boolean,
+          "timestamp" => PG::TextDecoder::TimestampUtc,
+          "timestamptz" => PG::TextDecoder::TimestampWithTimeZone,
+        }
+
         def add_pg_decoders
           @default_timezone = nil
           @timestamp_decoder = nil
 
-          coders_by_name = {
-            "int2" => PG::TextDecoder::Integer,
-            "int4" => PG::TextDecoder::Integer,
-            "int8" => PG::TextDecoder::Integer,
-            "oid" => PG::TextDecoder::Integer,
-            "float4" => PG::TextDecoder::Float,
-            "float8" => PG::TextDecoder::Float,
-            "numeric" => PG::TextDecoder::Numeric,
-            "bool" => PG::TextDecoder::Boolean,
-            "timestamp" => PG::TextDecoder::TimestampUtc,
-            "timestamptz" => PG::TextDecoder::TimestampWithTimeZone,
-          }
-
-          known_coder_types = coders_by_name.keys.map { |n| quote(n) }
-          query = <<~SQL % known_coder_types.join(", ")
-            SELECT t.oid, t.typname
-            FROM pg_type as t
-            WHERE t.typname IN (%s)
-          SQL
-          coders = execute_and_clear(query, "SCHEMA", []) do |result|
-            result.filter_map { |row| construct_coder(row, coders_by_name[row["typname"]]) }
+          coders = schema_cache.known_coder_type_records.filter_map do |row|
+            construct_coder(row, CODERS_BY_NAME[row["typname"]])
           end
 
           map = PG::TypeMapByOid.new

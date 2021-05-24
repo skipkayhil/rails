@@ -1,3 +1,7 @@
+*   Cache the result of type-related queries for PostgreSQL adapter.
+
+    *Hartley McGuire*, *Zhang Kang*
+
 *   Fix compatibility with `psych >= 4`.
 
     Starting in Psych 4.0.0 `YAML.load` behaves like `YAML.safe_load`. To preserve compatibility

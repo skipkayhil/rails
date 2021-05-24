@@ -7,7 +7,7 @@ module ActiveRecord
     class SchemaCacheTest < ActiveRecord::TestCase
       def setup
         @connection       = ActiveRecord::Base.connection
-        @cache            = SchemaCache.new @connection
+        @cache            = @connection.init_schema_cache
         @database_version = @connection.get_database_version
       end
 
@@ -17,7 +17,7 @@ module ActiveRecord
 
       def test_yaml_dump_and_load
         # Create an empty cache.
-        cache = SchemaCache.new @connection
+        cache = @connection.init_schema_cache
 
         tempfile = Tempfile.new(["schema_cache-", ".yml"])
         # Dump it. It should get populated before dumping.
@@ -45,7 +45,7 @@ module ActiveRecord
 
       def test_yaml_dump_and_load_with_gzip
         # Create an empty cache.
-        cache = SchemaCache.new @connection
+        cache = @connection.init_schema_cache
 
         tempfile = Tempfile.new(["schema_cache-", ".yml.gz"])
         # Dump it. It should get populated before dumping.
@@ -165,7 +165,7 @@ module ActiveRecord
 
       def test_marshal_dump_and_load
         # Create an empty cache.
-        cache = SchemaCache.new @connection
+        cache = @connection.init_schema_cache
 
         # Populate it.
         cache.add("posts")
@@ -185,7 +185,7 @@ module ActiveRecord
 
       def test_marshal_dump_and_load_via_disk
         # Create an empty cache.
-        cache = SchemaCache.new @connection
+        cache = @connection.init_schema_cache
 
         tempfile = Tempfile.new(["schema_cache-", ".dump"])
         # Dump it. It should get populated before dumping.
@@ -209,7 +209,7 @@ module ActiveRecord
 
       def test_marshal_dump_and_load_with_gzip
         # Create an empty cache.
-        cache = SchemaCache.new @connection
+        cache = @connection.init_schema_cache
 
         tempfile = Tempfile.new(["schema_cache-", ".dump.gz"])
         # Dump it. It should get populated before dumping.

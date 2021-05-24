@@ -162,7 +162,9 @@ module ActiveRecord
 
       def dump_to(filename)
         clear!
-        connection.data_sources.each { |table| add(table) }
+
+        prepare_dump
+
         open(filename) { |f|
           if filename.include?(".dump")
             f.write(Marshal.dump(self))
@@ -213,6 +215,10 @@ module ActiveRecord
 
         def prepare_data_sources
           connection.data_sources.each { |source| @data_sources[source] = true }
+        end
+
+        def prepare_dump
+          connection.data_sources.each { |table| add(table) }
         end
 
         def open(filename)

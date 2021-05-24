@@ -181,6 +181,10 @@ module ActiveRecord
         Thread.current[:ar_prepared_statements_disabled_cache] ||= Set.new
       end
 
+      def init_schema_cache
+        SchemaCache.new(self)
+      end
+
       class Version
         include Comparable
 

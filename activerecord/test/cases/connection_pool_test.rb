@@ -525,7 +525,7 @@ module ActiveRecord
 
       def test_pool_sets_connection_schema_cache
         connection = pool.checkout
-        schema_cache = SchemaCache.new connection
+        schema_cache = connection.init_schema_cache
         schema_cache.add(:posts)
         pool.schema_cache = schema_cache
 
