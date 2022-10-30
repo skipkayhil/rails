@@ -336,7 +336,7 @@ To keep using the current cache store, you can turn off cache versioning entirel
 
     initializer "active_record.set_filter_attributes" do
       ActiveSupport.on_load(:active_record) do
-        self.filter_attributes += Rails.application.config.filter_parameters
+        self.filter_attributes = Rails.application.config.filter_parameters
       end
     end
 
@@ -361,6 +361,10 @@ To keep using the current cache store, you can turn off cache versioning entirel
          key_derivation_salt: app.credentials.dig(:active_record_encryption, :key_derivation_salt),
          **config.active_record.encryption
 
+      if ActiveRecord::Encryption.config.add_to_filter_parameters
+        ActiveRecord::Encryption.install_auto_filtered_parameters_hook(app)
+      end
+
       ActiveSupport.on_load(:active_record) do
         # Support extended queries for deterministic attributes and validations
         if ActiveRecord::Encryption.config.extend_queries
@@ -373,13 +377,6 @@ To keep using the current cache store, you can turn off cache versioning entirel
         # Encrypt active record fixtures
         if ActiveRecord::Encryption.config.encrypt_fixtures
           ActiveRecord::Fixture.prepend ActiveRecord::Encryption::EncryptedFixtures
-        end
-      end
-
-      # Filtered params
-      ActiveSupport.on_load(:action_controller, run_once: true) do
-        if ActiveRecord::Encryption.config.add_to_filter_parameters
-          ActiveRecord::Encryption.install_auto_filtered_parameters_hook(app)
         end
       end
     end

@@ -4204,6 +4204,42 @@ module ApplicationTests
       assert_match(/The `legacy_connection_handling` setter was deprecated in 7.0 and removed in 7.1, but is still defined in your configuration. Please remove this call as it no longer has any effect./, error.message)
     end
 
+    test "encrypted attributes are added to ActiveRecord::Base.filter_attributes in production" do
+      app_file "app/models/post.rb", <<-RUBY
+        class Post < ActiveRecord::Base
+          encrypts :content
+        end
+      RUBY
+
+      add_to_config <<-RUBY
+        config.enable_reloading = false
+        config.eager_load = true
+      RUBY
+
+      app "production"
+
+      assert_includes Rails.configuration.filter_parameters, "post.content"
+      assert_includes ActiveRecord::Base.filter_attributes, "post.content"
+    end
+
+    test "encrypted attributes are added to ActiveRecord::Base.filter_attributes in development" do
+      app_file "app/models/post.rb", <<-RUBY
+        class Post < ActiveRecord::Base
+          encrypts :content
+        end
+      RUBY
+
+      app "development"
+
+      assert_not_includes Rails.configuration.filter_parameters, "post.content"
+      assert_not_includes ActiveRecord::Base.filter_attributes, "post.content"
+
+      assert Post
+
+      assert_includes Rails.configuration.filter_parameters, "post.content"
+      assert_includes ActiveRecord::Base.filter_attributes, "post.content"
+    end
+
     private
       def set_custom_config(contents, config_source = "custom".inspect)
         app_file "config/custom.yml", contents
