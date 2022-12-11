@@ -169,7 +169,9 @@ Rails application with a legacy database? No problem, you can easily override
 the default conventions.
 
 `ApplicationRecord` inherits from `ActiveRecord::Base`, which defines a
-number of helpful methods. You can use the `ActiveRecord::Base.table_name=`
+number of helpful methods. This class should be generated for you automatically
+when creating the application, and lives in `app/models/application_record.rb`.
+You can use the `ActiveRecord::Base.table_name=`
 method to specify the table name that should be used:
 
 ```ruby
@@ -179,10 +181,11 @@ end
 ```
 
 If you do so, you will have to define manually the class name that is hosting
-the fixtures (my_products.yml) using the `set_fixture_class` method in your test
-definition:
+the fixtures (`my_products.yml`) using the `set_fixture_class` method in your
+test definition:
 
 ```ruby
+# test/models/product_test.rb
 class ProductTest < ActiveSupport::TestCase
   set_fixture_class my_products: Product
   fixtures :my_products
@@ -199,7 +202,12 @@ class Product < ApplicationRecord
 end
 ```
 
-NOTE: Active Record does not support using non-primary key columns named `id`.
+NOTE: **Active Record does not support using non-primary key columns named `id`.**
+
+NOTE: If you try to create a column named `id` which is not the primary key,
+Rails will throw an error during migrations such as:
+`you can't redefine the primary key column 'id' on 'my_products'.`
+`To define a custom primary key, pass { id: false } to create_table.`
 
 CRUD: Reading and Writing Data
 ------------------------------
@@ -232,7 +240,8 @@ user.occupation = "Code Artist"
 A call to `user.save` will commit the record to the database.
 
 Finally, if a block is provided, both `create` and `new` will yield the new
-object to that block for initialization:
+object to that block for initialization, while only `create` will persist
+the resulting object to the database:
 
 ```ruby
 user = User.new do |u|
@@ -290,8 +299,8 @@ user.update(name: 'Dave')
 
 This is most useful when updating several attributes at once. 
 
-If you'd like to update several records in bulk without callbacks or
-validations, you can update the database directly using `update_all`:
+If you'd like to update several records in bulk **without callbacks or
+validations**, you can update the database directly using `update_all`:
 
 ```ruby
 User.update_all max_login_attempts: 3, must_change_password: true
@@ -357,16 +366,36 @@ Callbacks
 Active Record callbacks allow you to attach code to certain events in the
 life-cycle of your models. This enables you to add behavior to your models by
 transparently executing code when those events occur, like when you create a new
-record, update it, destroy it, and so on. You can learn more about callbacks in
-the [Active Record Callbacks guide](active_record_callbacks.html).
+record, update it, destroy it, and so on.
+
+```ruby
+class User < ApplicationRecord
+  after_create :log_new_user
+
+  private
+  def log_new_user
+    puts "A new user was registered"
+  end
+end
+```
+
+```irb
+irb> @user = User.create
+A new user was registered
+```
+
+You can learn more about callbacks in the [Active Record Callbacks
+guide](active_record_callbacks.html).
 
 Migrations
 ----------
 
-Rails provides a domain-specific language for managing a database schema called
-migrations. Migrations are stored in files which are executed against any
-database that Active Record supports using `rake`. Here's a migration that
-creates a table:
+Rails provides a convenient way to manage changes to a database schema via
+migrations. Migrations are written in a domain-specific language and stored
+in files which are executed against any database that Active Record supports
+using `rake`.
+
+Here's a migration that creates a new table called `publications`:
 
 ```ruby
 class CreatePublications < ActiveRecord::Migration[7.1]
@@ -384,8 +413,10 @@ class CreatePublications < ActiveRecord::Migration[7.1]
 end
 ```
 
-Rails keeps track of which files have been committed to the database and
-provides rollback features. To actually create the table, you'd run `bin/rails db:migrate`,
+Rails keeps track of which migrations have been committed to the database and stores them
+in a neighboring table in that same database called `schema_migrations`.
+
+To actually create the table, you'd run `bin/rails db:migrate`,
 and to roll it back, `bin/rails db:rollback`.
 
 Note that the above code is database-agnostic: it will run in MySQL,
