@@ -131,6 +131,11 @@ NOTE: While these column names are optional, they are in fact reserved by Active
 Creating Active Record Models
 -----------------------------
 
+When generating an application, an abstract `ApplicationRecord` class will be
+created in `app/models/application_record.rb`. This is the base class for all
+models in an app, and it's what turns a regular ruby class into an Active Record
+model.
+
 To create Active Record models, subclass the `ApplicationRecord` class and you're good to go:
 
 ```ruby
@@ -168,11 +173,10 @@ What if you need to follow a different naming convention or need to use your
 Rails application with a legacy database? No problem, you can easily override
 the default conventions.
 
-`ApplicationRecord` inherits from `ActiveRecord::Base`, which defines a
-number of helpful methods. This class should be generated for you automatically
-when creating the application, and lives in `app/models/application_record.rb`.
-You can use the `ActiveRecord::Base.table_name=`
-method to specify the table name that should be used:
+Since `ApplicationRecord` inherits from `ActiveRecord::Base`, your application's
+models will have a number of helpful methods available to them. Fox example, you
+can use the `ActiveRecord::Base.table_name=` method to customize the table name
+that should be used:
 
 ```ruby
 class Product < ApplicationRecord
@@ -180,7 +184,7 @@ class Product < ApplicationRecord
 end
 ```
 
-If you do so, you will have to define manually the class name that is hosting
+If you do so, you will have to manually define the class name that is hosting
 the fixtures (`my_products.yml`) using the `set_fixture_class` method in your
 test definition:
 
