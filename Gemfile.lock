@@ -109,6 +109,13 @@ PATH
       thor (~> 1.0, >= 1.2.2)
       zeitwerk (~> 2.6)
 
+PATH
+  remote: tools/rail_inspector
+  specs:
+    rail_inspector (0.0.2)
+      syntax_tree (= 6.1.1)
+      thor (~> 1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -359,6 +366,7 @@ GEM
       ast (~> 2.4.1)
     path_expander (1.1.1)
     pg (1.5.3)
+    prettier_print (1.2.1)
     propshaft (0.6.4)
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -509,6 +517,8 @@ GEM
     stringio (3.0.4)
     sucker_punch (3.1.0)
       concurrent-ruby (~> 1.0)
+    syntax_tree (6.1.1)
+      prettier_print (>= 1.2.0)
     tailwindcss-rails (2.0.21)
       railties (>= 6.0.0)
     tailwindcss-rails (2.0.21-x86_64-darwin)
@@ -605,6 +615,7 @@ DEPENDENCIES
   racc (>= 1.4.6)
   rack (~> 2.0)
   rack-cache (~> 1.2)
+  rail_inspector!
   rails!
   rake (>= 13)
   rdoc (~> 6.5)

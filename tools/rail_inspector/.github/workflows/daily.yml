@@ -1,0 +1,25 @@
+name: daily-jobs
+
+on:
+  schedule:
+  - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  daily-inspection:
+    name: Daily Inspection (rails main)
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.2
+        bundler-cache: true
+    - uses: actions/checkout@v3
+      with:
+        repository: rails/rails
+        path: rails
+    - run: bundle exec railspect changelogs ./rails
+    - run: bundle exec railspect configuration ./rails

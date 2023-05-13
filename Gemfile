@@ -40,6 +40,10 @@ gem "json", ">= 2.0.0"
 # Workaround until Ruby ships with cgi version 0.3.6 or higher.
 gem "cgi", ">= 0.3.6", require: false
 
+group :lint do
+  gem "rail_inspector", path: "./tools/rail_inspector"
+end
+
 group :rubocop do
   gem "rubocop", ">= 1.25.1", require: false
   gem "rubocop-minitest", require: false
