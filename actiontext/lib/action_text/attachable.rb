@@ -1,18 +1,21 @@
 # frozen_string_literal: true
+# :markup: markdown
 
 module ActionText
   # = Action Text \Attachable
   #
   # Include this module to make a record attachable to an ActionText::Content.
   #
-  #   class Person < ApplicationRecord
-  #     include ActionText::Attachable
-  #   end
+  # ``` ruby
+  # class Person < ApplicationRecord
+  #   include ActionText::Attachable
+  # end
   #
-  #   person = Person.create! name: "Javan"
-  #   html = %Q(<action-text-attachment sgid="#{person.attachable_sgid}"></action-text-attachment>)
-  #   content = ActionText::Content.new(html)
-  #   content.attachables # => [person]
+  # person = Person.create! name: "Javan"
+  # html = %Q(<action-text-attachment sgid="#{person.attachable_sgid}"></action-text-attachment>)
+  # content = ActionText::Content.new(html)
+  # content.attachables # => [person]
+  # ```
   module Attachable
     extend ActiveSupport::Concern
 
@@ -21,11 +24,13 @@ module ActionText
     class << self
       # Extracts the +ActionText::Attachable+ from the attachment HTML node:
       #
-      #   person = Person.create! name: "Javan"
-      #   html = %Q(<action-text-attachment sgid="#{person.attachable_sgid}"></action-text-attachment>)
-      #   fragment = ActionText::Fragment.wrap(html)
-      #   attachment_node = fragment.find_all(ActionText::Attachment.tag_name).first
-      #   ActionText::Attachable.from_node(attachment_node) # => person
+      # ``` ruby
+      # person = Person.create! name: "Javan"
+      # html = %Q(<action-text-attachment sgid="#{person.attachable_sgid}"></action-text-attachment>)
+      # fragment = ActionText::Fragment.wrap(html)
+      # attachment_node = fragment.find_all(ActionText::Attachment.tag_name).first
+      # ActionText::Attachable.from_node(attachment_node) # => person
+      # ```
       def from_node(node)
         if attachable = attachable_from_sgid(node["sgid"])
           attachable
@@ -62,11 +67,13 @@ module ActionText
       #
       # Override to render a different partial:
       #
-      #   class User < ApplicationRecord
-      #     def self.to_missing_attachable_partial_path
-      #       "users/missing_attachable"
-      #     end
+      # ``` ruby
+      # class User < ApplicationRecord
+      #   def self.to_missing_attachable_partial_path
+      #     "users/missing_attachable"
       #   end
+      # end
+      # ```
       def to_missing_attachable_partial_path
         ActionText::Attachables::MissingAttachable::DEFAULT_PARTIAL_PATH
       end
@@ -108,11 +115,13 @@ module ActionText
     #
     # Override to render a different partial:
     #
-    #   class User < ApplicationRecord
-    #     def to_trix_content_attachment_partial_path
-    #       "users/trix_content_attachment"
-    #     end
+    # ``` ruby
+    # class User < ApplicationRecord
+    #   def to_trix_content_attachment_partial_path
+    #     "users/trix_content_attachment"
     #   end
+    # end
+    # ```
     def to_trix_content_attachment_partial_path
       to_partial_path
     end
@@ -122,11 +131,13 @@ module ActionText
     #
     # Override to render a different partial:
     #
-    #   class User < ApplicationRecord
-    #     def to_attachable_partial_path
-    #       "users/attachable"
-    #     end
+    # ``` ruby
+    # class User < ApplicationRecord
+    #   def to_attachable_partial_path
+    #     "users/attachable"
     #   end
+    # end
+    # ```
     def to_attachable_partial_path
       to_partial_path
     end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# :markup: markdown
 
 module ActionText
   module Attribute
@@ -8,32 +9,40 @@ module ActionText
       # Provides access to a dependent RichText model that holds the body and attachments for a single named rich text attribute.
       # This dependent attribute is lazily instantiated and will be auto-saved when it's been changed. Example:
       #
-      #   class Message < ActiveRecord::Base
-      #     has_rich_text :content
-      #   end
+      # ``` ruby
+      # class Message < ActiveRecord::Base
+      #   has_rich_text :content
+      # end
       #
-      #   message = Message.create!(content: "<h1>Funny times!</h1>")
-      #   message.content? #=> true
-      #   message.content.to_s # => "<h1>Funny times!</h1>"
-      #   message.content.to_plain_text # => "Funny times!"
+      # message = Message.create!(content: "<h1>Funny times!</h1>")
+      # message.content? #=> true
+      # message.content.to_s # => "<h1>Funny times!</h1>"
+      # message.content.to_plain_text # => "Funny times!"
+      # ```
       #
       # The dependent RichText model will also automatically process attachments links as sent via the Trix-powered editor.
       # These attachments are associated with the RichText model using Active Storage.
       #
       # If you wish to preload the dependent RichText model, you can use the named scope:
       #
-      #   Message.all.with_rich_text_content # Avoids N+1 queries when you just want the body, not the attachments.
-      #   Message.all.with_rich_text_content_and_embeds # Avoids N+1 queries when you just want the body and attachments.
-      #   Message.all.with_all_rich_text # Loads all rich text associations.
+      # ``` ruby
+      # Message.all.with_rich_text_content # Avoids N+1 queries when you just want the body, not the attachments.
+      # Message.all.with_rich_text_content_and_embeds # Avoids N+1 queries when you just want the body and attachments.
+      # Message.all.with_all_rich_text # Loads all rich text associations.
+      # ```
       #
       # ==== Options
       #
       # * <tt>:encrypted</tt> - Pass true to encrypt the rich text attribute. The encryption will be non-deterministic. See
-      #   +ActiveRecord::Encryption::EncryptableRecord.encrypts+. Default: false.
+      # ``` ruby
+      # +ActiveRecord::Encryption::EncryptableRecord.encrypts+. Default: false.
+      # ```
       #
       # * <tt>:strict_loading</tt> - Pass true to force strict loading. When
-      #   omitted, <tt>strict_loading:</tt> will be set to the value of the
-      #   <tt>strict_loading_by_default</tt> class attribute (false by default).
+      # ``` ruby
+      # omitted, <tt>strict_loading:</tt> will be set to the value of the
+      # <tt>strict_loading_by_default</tt> class attribute (false by default).
+      # ```
       def has_rich_text(name, encrypted: false, strict_loading: strict_loading_by_default)
         class_eval <<-CODE, __FILE__, __LINE__ + 1
           def #{name}

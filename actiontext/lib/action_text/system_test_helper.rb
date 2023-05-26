@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# :markup: markdown
 
 module ActionText
   module SystemTestHelper
@@ -13,22 +14,24 @@ module ActionText
     #
     # Examples:
     #
-    #   # <trix-editor id="message_content" ...></trix-editor>
-    #   fill_in_rich_text_area "message_content", with: "Hello <em>world!</em>"
+    # ``` ruby
+    # # <trix-editor id="message_content" ...></trix-editor>
+    # fill_in_rich_text_area "message_content", with: "Hello <em>world!</em>"
     #
-    #   # <trix-editor placeholder="Your message here" ...></trix-editor>
-    #   fill_in_rich_text_area "Your message here", with: "Hello <em>world!</em>"
+    # # <trix-editor placeholder="Your message here" ...></trix-editor>
+    # fill_in_rich_text_area "Your message here", with: "Hello <em>world!</em>"
     #
-    #   # <label for="message_content">Message content</label>
-    #   # <trix-editor id="message_content" ...></trix-editor>
-    #   fill_in_rich_text_area "Message content", with: "Hello <em>world!</em>"
+    # # <label for="message_content">Message content</label>
+    # # <trix-editor id="message_content" ...></trix-editor>
+    # fill_in_rich_text_area "Message content", with: "Hello <em>world!</em>"
     #
-    #   # <trix-editor aria-label="Message content" ...></trix-editor>
-    #   fill_in_rich_text_area "Message content", with: "Hello <em>world!</em>"
+    # # <trix-editor aria-label="Message content" ...></trix-editor>
+    # fill_in_rich_text_area "Message content", with: "Hello <em>world!</em>"
     #
-    #   # <input id="trix_input_1" name="message[content]" type="hidden">
-    #   # <trix-editor input="trix_input_1"></trix-editor>
-    #   fill_in_rich_text_area "message[content]", with: "Hello <em>world!</em>"
+    # # <input id="trix_input_1" name="message[content]" type="hidden">
+    # # <trix-editor input="trix_input_1"></trix-editor>
+    # fill_in_rich_text_area "message[content]", with: "Hello <em>world!</em>"
+    # ```
     def fill_in_rich_text_area(locator = nil, with:)
       find(:rich_text_area, locator).execute_script("this.editor.loadHTML(arguments[0])", with.to_s)
     end

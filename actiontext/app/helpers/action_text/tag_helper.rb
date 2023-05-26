@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# :markup: markdown
 
 require "active_support/core_ext/object/try"
 require "action_view/helpers/tags/placeholderable"
@@ -12,15 +13,19 @@ module ActionText
     #
     # ==== Options
     # * <tt>:class</tt> - Defaults to "trix-content" so that default styles will be applied.
-    #   Setting this to a different value will prevent default styles from being applied.
+    # ``` ruby
+    # Setting this to a different value will prevent default styles from being applied.
+    # ```
     # * <tt>[:data][:direct_upload_url]</tt> - Defaults to +rails_direct_uploads_url+.
     # * <tt>[:data][:blob_url_template]</tt> - Defaults to <tt>rails_service_blob_url(":signed_id", ":filename")</tt>.
     #
     # ==== Example
     #
-    #   rich_text_area_tag "content", message.content
-    #   # <input type="hidden" name="content" id="trix_input_post_1">
-    #   # <trix-editor id="content" input="trix_input_post_1" class="trix-content" ...></trix-editor>
+    # ``` ruby
+    # rich_text_area_tag "content", message.content
+    # # <input type="hidden" name="content" id="trix_input_post_1">
+    # # <trix-editor id="content" input="trix_input_post_1" class="trix-content" ...></trix-editor>
+    # ```
     def rich_text_area_tag(name, value = nil, options = {})
       options = options.symbolize_keys
       form = options.delete(:form)
@@ -66,17 +71,19 @@ module ActionView::Helpers
     # * <tt>[:data][:blob_url_template]</tt> - Defaults to <tt>rails_service_blob_url(":signed_id", ":filename")</tt>.
     #
     # ==== Example
-    #   form_with(model: @message) do |form|
-    #     form.rich_text_area :content
-    #   end
-    #   # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1">
-    #   # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
+    # ``` ruby
+    # form_with(model: @message) do |form|
+    #   form.rich_text_area :content
+    # end
+    # # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1">
+    # # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
     #
-    #   form_with(model: @message) do |form|
-    #     form.rich_text_area :content, value: "<h1>Default message</h1>"
-    #   end
-    #   # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1" value="<h1>Default message</h1>">
-    #   # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
+    # form_with(model: @message) do |form|
+    #   form.rich_text_area :content, value: "<h1>Default message</h1>"
+    # end
+    # # <input type="hidden" name="message[content]" id="message_content_trix_input_message_1" value="<h1>Default message</h1>">
+    # # <trix-editor id="content" input="message_content_trix_input_message_1" class="trix-content" ...></trix-editor>
+    # ```
     def rich_text_area(object_name, method, options = {})
       Tags::ActionText.new(object_name, method, self, options).render
     end
