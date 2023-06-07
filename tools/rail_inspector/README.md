@@ -1,6 +1,6 @@
 # RailInspector
 
-A collection of linters for [`rails/rails`](https://github.com/rails/rails)
+An awesome collection of linters for [`rails/rails`](https://github.com/rails/rails)
 
 ## Installation
 
