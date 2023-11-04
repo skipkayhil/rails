@@ -175,6 +175,8 @@ module ActionDispatch # :nodoc:
         @headers[key] = value
       end
 
+      @content_type_cache = ContentTypeCache.new nil, nil, nil
+
       self.body, self.status = body, status
 
       @cv           = new_cond
@@ -244,11 +246,10 @@ module ActionDispatch # :nodoc:
     # information.
     def content_type=(content_type)
       return unless content_type
-      new_header_info = parse_content_type(content_type.to_s)
-      prev_header_info = parsed_content_type_header
-      charset = new_header_info.charset || prev_header_info.charset
-      charset ||= self.class.default_charset unless prev_header_info.mime_type
-      set_content_type new_header_info.mime_type, charset
+
+      parse_content_type(content_type.to_s)
+
+      set_header CONTENT_TYPE, content_type_cache.header
     end
 
     # Content type of response.
@@ -418,8 +419,21 @@ module ActionDispatch # :nodoc:
     end
 
   private
-    ContentTypeHeader = Struct.new :mime_type, :charset
-    NullContentTypeHeader = ContentTypeHeader.new nil, nil
+    attr_reader :content_type_cache
+
+    ContentTypeCache = Struct.new :mime_type, :charset, :header do
+      def update_header!
+        self.header = to_s
+      end
+
+      def to_s
+        if charset
+          "#{mime_type}; charset=#{charset}"
+        else
+          mime_type || ""
+        end
+      end
+    end
 
     CONTENT_TYPE_PARSER = /
       \A
@@ -429,22 +443,47 @@ module ActionDispatch # :nodoc:
 
     def parse_content_type(content_type)
       if content_type && match = CONTENT_TYPE_PARSER.match(content_type)
-        ContentTypeHeader.new(match[:mime_type], match[:charset])
+        old_content_type = content_type_cache
+
+        new_charset = if charset = match[:charset]
+          charset
+        elsif old_content_type.charset.nil? && old_content_type.mime_type.nil?
+          self.class.default_charset
+        else
+          old_content_type.charset
+        end
+
+        content_type_cache.mime_type = match[:mime_type]
+        content_type_cache.charset = new_charset
       else
-        NullContentTypeHeader
+        content_type_cache.mime_type = nil
+        content_type_cache.charset = nil
       end
+
+      content_type_cache.update_header!
     end
 
     # Small internal convenience method to get the parsed version of the current
     # content type header.
     def parsed_content_type_header
-      parse_content_type(get_header(CONTENT_TYPE))
+      content_type = get_header(CONTENT_TYPE)
+
+      if content_type_cache.header != content_type
+        parse_content_type(content_type)
+      end
+
+      content_type_cache
     end
 
     def set_content_type(content_type, charset)
-      type = content_type || ""
-      type = "#{type}; charset=#{charset.to_s.downcase}" if charset
-      set_header CONTENT_TYPE, type
+      parsed_content_type = content_type_cache
+      return unless parsed_content_type.mime_type != content_type || parsed_content_type.charset != charset
+
+      parsed_content_type.mime_type = content_type
+      parsed_content_type.charset = charset
+      parsed_content_type.update_header!
+
+      set_header CONTENT_TYPE, parsed_content_type.header
     end
 
     def before_committed
