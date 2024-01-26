@@ -320,8 +320,10 @@ class Time
       compare_without_coercion(other)
     elsif other.is_a?(Time)
       compare_without_coercion(other.to_time)
-    else
+    elsif other.acts_like?(:date)
       to_datetime <=> other
+    else
+      compare_without_coercion(other)
     end
   end
   alias_method :compare_without_coercion, :<=>

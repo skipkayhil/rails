@@ -1,3 +1,8 @@
+*   Raise an ArgumentError when a Time is compared with a String or Integer to
+    mirror the behavior of Ruby.
+
+    *Hartley McGuire*
+
 *   Include `IPAddr#prefix` when serializing an `IPAddr` using the
     `ActiveSupport::MessagePack` serializer. This change is backward and forward
     compatible — old payloads can still be read, and new payloads will be

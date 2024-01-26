@@ -1133,10 +1133,22 @@ class TimeExtCalculationsTest < ActiveSupport::TestCase
   end
 
   def test_compare_with_string
-    assert_equal 1, Time.utc(2000) <=> Time.utc(1999, 12, 31, 23, 59, 59, 999).to_s
-    assert_equal 0, Time.utc(2000) <=> Time.utc(2000, 1, 1, 0, 0, 0).to_s
-    assert_equal(-1, Time.utc(2000) <=> Time.utc(2000, 1, 1, 0, 0, 1, 0).to_s)
+    assert_nil Time.utc(2000) <=> Time.utc(1999, 12, 31, 23, 59, 59, 999).to_s
+    assert_nil Time.utc(2000) <=> Time.utc(2000, 1, 1, 0, 0, 0).to_s
+    assert_nil Time.utc(2000) <=> Time.utc(2000, 1, 1, 0, 0, 1, 0).to_s
     assert_nil Time.utc(2000) <=> "Invalid as Time"
+
+    assert_raises(ArgumentError) do
+      Time.now >= Time.now.to_s
+    end
+  end
+
+  def test_compare_with_integer
+    assert_nil Time.now <=> 1
+
+    assert_raises(ArgumentError) do
+      Time.now >= 1
+    end
   end
 
   def test_at_with_datetime
