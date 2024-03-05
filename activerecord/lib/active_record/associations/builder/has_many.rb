@@ -6,6 +6,20 @@ module ActiveRecord::Associations::Builder # :nodoc:
       :has_many
     end
 
+    def self.build(model, name, scope, options, &block)
+      reflection = super
+
+      define_counter_cache_columns(model, reflection)
+
+      reflection
+    end
+
+    def self.define_counter_cache_columns(model, reflection)
+      if column_name = reflection.inverse_of&.counter_cache_column
+        model._counter_cache_columns |= [column_name]
+      end
+    end
+
     def self.valid_options(options)
       valid = super + [:counter_cache, :join_table, :index_errors]
       valid += [:as, :foreign_type] if options[:as]
