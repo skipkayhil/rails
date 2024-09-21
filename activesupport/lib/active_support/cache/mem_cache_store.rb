@@ -210,6 +210,7 @@ module ActiveSupport
 
         # Reads multiple entries from the cache implementation.
         def read_multi_entries(names, **options)
+          options = merged_options(options)
           keys_to_names = names.index_by { |name| normalize_key(name, options) }
 
           raw_values = begin

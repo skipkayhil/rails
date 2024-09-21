@@ -134,6 +134,7 @@ module ActiveSupport
           def read_multi_entries(names, **options)
             return super unless local_cache
 
+            options = merged_options(options)
             keys_to_names = names.index_by { |name| normalize_key(name, options) }
 
             local_entries = local_cache.read_multi_entries(keys_to_names.keys)
@@ -165,6 +166,7 @@ module ActiveSupport
           end
 
           def write_cache_value(name, value, **options)
+            options = merged_options(options)
             name = normalize_key(name, options)
             cache = local_cache
             if value

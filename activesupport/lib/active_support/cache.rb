@@ -949,6 +949,17 @@ module ActiveSupport
           namespace = if call_options&.key?(:namespace)
             call_options[:namespace]
           else
+            if options.key?(:namespace)
+              raise
+              ActiveSupport.deprecator.warn <<~MSG
+                #namespace_key automatically falling back to a Cache Store's
+                options is deprecated, and in Rails 8.1 #namespace_key will only
+                use the options given.
+
+                Your Cache Store should be updated to take the Store's options
+                into account.
+              MSG
+            end
             options[:namespace]
           end
 

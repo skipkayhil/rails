@@ -591,7 +591,7 @@ module CacheStoreBehavior
   def test_race_condition_protection_skipped_if_not_defined
     key = SecureRandom.alphanumeric
     @cache.write(key, "bar")
-    time = @cache.send(:read_entry, @cache.send(:normalize_key, key, {}), **{}).expires_at
+    time = @cache.send(:read_entry, @cache.send(:normalize_key, key, @cache.options), **{}).expires_at
 
     Time.stub(:now, Time.at(time)) do
       result = @cache.fetch(key) do

@@ -157,7 +157,7 @@ module CacheInstrumentationBehavior
       ActiveSupport::Notifications.unsubscribe event_name
     end
 
-    def normalized_key(key, options = nil)
+    def normalized_key(key, options = @cache.options)
       @cache.send(:normalize_key, key, options)
     end
 end

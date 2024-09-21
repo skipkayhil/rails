@@ -202,6 +202,7 @@ module ActiveSupport
         unless String === matcher
           raise ArgumentError, "Only Redis glob strings are supported: #{matcher.inspect}"
         end
+        options = merged_options(options)
         pattern = namespace_key(matcher, options)
 
         instrument :delete_matched, pattern do
