@@ -102,16 +102,16 @@ module ActiveRecord
         select_all(arel, name, binds, async: async).then(&:rows)
       end
 
-      def query_value(sql, name = nil) # :nodoc:
-        single_value_from_rows(query(sql, name))
+      def query_value(...) # :nodoc:
+        single_value_from_rows(query(...))
       end
 
-      def query_values(sql, name = nil) # :nodoc:
-        query(sql, name).map(&:first)
+      def query_values(...) # :nodoc:
+        query(...).map(&:first)
       end
 
-      def query(sql, name = nil) # :nodoc:
-        internal_exec_query(sql, name).rows
+      def query(...) # :nodoc:
+        internal_exec_query(...).rows
       end
 
       # Determines whether the SQL statement is a write query.
