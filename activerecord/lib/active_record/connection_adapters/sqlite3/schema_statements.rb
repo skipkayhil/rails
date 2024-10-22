@@ -11,7 +11,7 @@ module ActiveRecord
             # See https://www.sqlite.org/fileformat2.html#intschema
             next if row["name"].start_with?("sqlite_")
 
-            index_sql = query_value(<<~SQL, "SCHEMA")
+            index_sql = query_value(<<~SQL, "SCHEMA", allow_retry: true)
               SELECT sql
               FROM sqlite_master
               WHERE name = #{quote(row['name'])} AND type = 'index'
@@ -83,7 +83,7 @@ module ActiveRecord
         end
 
         def check_constraints(table_name)
-          table_sql = query_value(<<-SQL, "SCHEMA")
+          table_sql = query_value(<<-SQL, "SCHEMA", allow_retry: true)
             SELECT sql
             FROM sqlite_master
             WHERE name = #{quote(table_name)} AND type = 'table'
