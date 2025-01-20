@@ -183,11 +183,11 @@ module ActionDispatch
           end
 
           def terminal(node, seed)
-            seed + node.left
+            seed << node.left
           end
 
           def visit_GROUP(node, seed)
-            visit(node.left, seed.dup << "(") << ")"
+            visit(node.left, seed << "(") << ")"
           end
 
           INSTANCE = new
