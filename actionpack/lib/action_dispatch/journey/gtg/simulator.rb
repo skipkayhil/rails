@@ -29,8 +29,8 @@ module ActionDispatch
           state = INITIAL_STATE
           start_index = 0
 
-          while sym = input.scan(%r([/.?]|[^/.?]+))
-            end_index = start_index + sym.length
+          while sym_length = input.skip(%r([/.?]|[^/.?]+))
+            end_index = start_index + sym_length
 
             state = tt.move(state, string, start_index, end_index)
 
