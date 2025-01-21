@@ -52,7 +52,18 @@ module ActionDispatch
 
           next_states = []
 
-          tok = full_string.slice(start_index, end_index - start_index)
+          length = end_index - start_index
+
+          tok = if length == 1
+                  case full_string.getbyte(start_index)
+                  when 46
+                    "."
+                  when 47
+                    "/"
+                  when 63
+                    "?"
+                  end
+                end || full_string.slice(start_index, length)
           token_matches_default_component = DEFAULT_EXP_ANCHORED.match?(tok)
 
           t.each { |s, previous_start|
