@@ -47,10 +47,11 @@ module ActionDispatch
           Array(t)
         end
 
-        def move(t, full_string, start_index, end_index)
-          return [] if t.empty?
+        def move(states, continuous_states, full_string, start_index, end_index)
+          return [[], []] if states.empty? && continuous_states.empty?
 
           next_states = []
+          next_continuous_states = []
 
           length = end_index - start_index
 
@@ -66,46 +67,50 @@ module ActionDispatch
                 end || full_string.slice(start_index, length)
           token_matches_default_component = DEFAULT_EXP_ANCHORED.match?(tok)
 
-          t.each { |s, previous_start|
-            if previous_start.nil?
-              # In the simple case of a "default" param regex do this fast-path and add all
-              # next states.
-              if token_matches_default_component && std_state = @stdparam_states[s]
-                next_states << [std_state, nil].freeze
-              end
+          states.each { |s|
+            # In the simple case of a "default" param regex do this fast-path and add all
+            # next states.
+            if token_matches_default_component && std_state = @stdparam_states[s]
+              next_states << std_state
+            end
 
-              # When we have a literal string, we can just pull the next state
-              if states = @string_states[s]
-                next_states << [states[tok], nil].freeze unless states[tok].nil?
-              end
+            # When we have a literal string, we can just pull the next state
+            if new_states = @string_states[s]
+              next_states << new_states[tok] unless new_states[tok].nil?
             end
 
             # For regexes that aren't the "default" style, they may potentially not be
             # terminated by the first "token" [./?], so we need to continue to attempt to
             # match this regexp as well as any successful paths that continue out of it.
             # both paths could be valid.
-            if states = @regexp_states[s]
-              slice_start = if previous_start.nil?
-                start_index
-              else
-                previous_start
-              end
-
-              slice_length = end_index - slice_start
-              curr_slice = full_string.slice(slice_start, slice_length)
-
-              states.each { |re, v|
+            if new_states = @regexp_states[s]
+              new_states.each { |re, v|
                 # if we match, we can try moving past this
-                next_states << [v, nil].freeze if !v.nil? && re.match?(curr_slice)
+                next_states << v if !v.nil? && re.match?(tok)
               }
 
               # and regardless, we must continue accepting tokens and retrying this regexp. we
               # need to remember where we started as well so we can take bigger slices.
-              next_states << [s, slice_start].freeze
+              next_continuous_states << [s, start_index].freeze
             end
           }
 
-          next_states
+          continuous_states.each { |s, previous_start|
+            if new_states = @regexp_states[s]
+              curr_slice = full_string.slice(previous_start, end_index - previous_start)
+
+              new_states.each { |re, v|
+                # if we match, we can try moving past this
+                next_states << v if !v.nil? && re.match?(curr_slice)
+              }
+
+              # and regardless, we must continue accepting tokens and retrying this regexp. we
+              # need to remember where we started as well so we can take bigger slices.
+              next_continuous_states << [s, previous_start].freeze
+            end
+          }
+
+          [next_states, next_continuous_states]
         end
 
         def as_json(options = nil)
