@@ -125,7 +125,7 @@ module ActionDispatch
               val = match_data[i + 1]
               path_parameters[name.to_sym] = Utils.unescape_uri(val) if val
             }
-            yield [match_data, path_parameters, r]
+            yield(match_data, path_parameters, r)
           }
         end
 
