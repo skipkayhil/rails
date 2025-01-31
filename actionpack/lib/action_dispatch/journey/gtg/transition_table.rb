@@ -48,69 +48,77 @@ module ActionDispatch
         end
 
         def move(states, continuous_states, full_string, start_index, end_index)
-          return [[], []] if states.empty? && continuous_states.empty?
+          states_to_process = states.length
+          continuous_states_to_process = continuous_states.length
 
-          next_states = []
-          next_continuous_states = []
+          if states_to_process
+            length = end_index - start_index
 
-          length = end_index - start_index
+            tok = if length == 1
+                    case full_string.getbyte(start_index)
+                    when 46
+                      "."
+                    when 47
+                      "/"
+                    when 63
+                      "?"
+                    end
+                  end || full_string.slice(start_index, length)
+            token_matches_default_component = DEFAULT_EXP_ANCHORED.match?(tok)
 
-          tok = if length == 1
-                  case full_string.getbyte(start_index)
-                  when 46
-                    "."
-                  when 47
-                    "/"
-                  when 63
-                    "?"
-                  end
-                end || full_string.slice(start_index, length)
-          token_matches_default_component = DEFAULT_EXP_ANCHORED.match?(tok)
+            states_processed = 0
+            while states_processed < states_to_process
+              s = states.shift
 
-          states.each { |s|
-            # In the simple case of a "default" param regex do this fast-path and add all
-            # next states.
-            if token_matches_default_component && std_state = @stdparam_states[s]
-              next_states << std_state
+              # In the simple case of a "default" param regex do this fast-path and add all
+              # next states.
+              if token_matches_default_component && std_state = @stdparam_states[s]
+                states << std_state
+              end
+
+              # When we have a literal string, we can just pull the next state
+              if new_states = @string_states[s]
+                states << new_states[tok] unless new_states[tok].nil?
+              end
+
+              # For regexes that aren't the "default" style, they may potentially not be
+              # terminated by the first "token" [./?], so we need to continue to attempt to
+              # match this regexp as well as any successful paths that continue out of it.
+              # both paths could be valid.
+              if new_states = @regexp_states[s]
+                new_states.each { |re, v|
+                  # if we match, we can try moving past this
+                  states << v if !v.nil? && re.match?(tok)
+                }
+
+                # and regardless, we must continue accepting tokens and retrying this regexp. we
+                # need to remember where we started as well so we can take bigger slices.
+                continuous_states << [s, start_index].freeze
+              end
+
+              states_processed += 1
             end
+          end
 
-            # When we have a literal string, we can just pull the next state
-            if new_states = @string_states[s]
-              next_states << new_states[tok] unless new_states[tok].nil?
-            end
+          continuous_states_processed = 0
+          while continuous_states_processed < continuous_states_to_process
+            s, previous_start = continuous_states.shift
 
-            # For regexes that aren't the "default" style, they may potentially not be
-            # terminated by the first "token" [./?], so we need to continue to attempt to
-            # match this regexp as well as any successful paths that continue out of it.
-            # both paths could be valid.
-            if new_states = @regexp_states[s]
-              new_states.each { |re, v|
-                # if we match, we can try moving past this
-                next_states << v if !v.nil? && re.match?(tok)
-              }
-
-              # and regardless, we must continue accepting tokens and retrying this regexp. we
-              # need to remember where we started as well so we can take bigger slices.
-              next_continuous_states << [s, start_index].freeze
-            end
-          }
-
-          continuous_states.each { |s, previous_start|
             if new_states = @regexp_states[s]
               curr_slice = full_string.slice(previous_start, end_index - previous_start)
 
               new_states.each { |re, v|
                 # if we match, we can try moving past this
-                next_states << v if !v.nil? && re.match?(curr_slice)
+                states << v if !v.nil? && re.match?(curr_slice)
               }
 
               # and regardless, we must continue accepting tokens and retrying this regexp. we
               # need to remember where we started as well so we can take bigger slices.
-              next_continuous_states << [s, previous_start].freeze
+              continuous_states << [s, previous_start].freeze
             end
-          }
 
-          [next_states, next_continuous_states]
+            continuous_states_processed += 1
+          end
         end
 
         def as_json(options = nil)

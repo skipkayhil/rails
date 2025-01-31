@@ -16,8 +16,6 @@ module ActionDispatch
       end
 
       class Simulator # :nodoc:
-        INITIAL_STATE = [0].freeze
-
         attr_reader :tt
 
         def initialize(transition_table)
@@ -26,14 +24,14 @@ module ActionDispatch
 
         def memos(string)
           input = StringScanner.new(string)
-          state = INITIAL_STATE
+          state = [0]
           continuous_state = []
           start_index = 0
 
           while sym_length = input.skip(%r([/.?]|[^/.?]+))
             end_index = start_index + sym_length
 
-            state, continuous_state = tt.move(state, continuous_state, string, start_index, end_index)
+            tt.move(state, continuous_state, string, start_index, end_index)
 
             start_index = end_index
           end
