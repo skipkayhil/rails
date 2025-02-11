@@ -9,21 +9,21 @@ module ActionDispatch
         def test_following_states_multi
           table = tt ["a|a"]
 
-          state = [0, nil]
-          table.move(state, "a", "a", 0, true)
-          assert_equal 1, state.each_slice(2).count
+          state = [0]
+          table.move(state, [], "a", "a", 0, true)
+          assert_equal 1, state.length
         end
 
         def test_following_states_multi_regexp
           table = tt [":a|b"]
 
-          state = [0, nil]
-          table.move(state, "fooo", "fooo", 0, true)
-          assert_equal 1, state.each_slice(2).count
+          state = [0]
+          table.move(state, [], "fooo", "fooo", 0, true)
+          assert_equal 1, state.length
 
-          state = [0, nil]
-          table.move(state, "b", "b", 0, true)
-          assert_equal 2, state.each_slice(2).count
+          state = [0]
+          table.move(state, [], "b", "b", 0, true)
+          assert_equal 2, state.length
         end
 
         def test_multi_path
@@ -34,9 +34,9 @@ module ActionDispatch
             [2, "b"],
             [2, "/"],
             [1, "c"],
-          ].inject([0, nil]) { |state, (exp, sym)|
-            table.move(state, sym, sym, 0, sym != "/")
-            assert_equal exp, state.each_slice(2).count
+          ].inject([0]) { |state, (exp, sym)|
+            table.move(state, [], sym, sym, 0, sym != "/")
+            assert_equal exp, state.length
             state
           }
         end

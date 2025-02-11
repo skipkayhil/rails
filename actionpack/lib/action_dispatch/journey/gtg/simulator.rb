@@ -27,7 +27,8 @@ module ActionDispatch
         end
 
         def memos(string)
-          state = [0, nil]
+          state = [0]
+          continuous_state = []
 
           pos = 0
           eos = string.bytesize
@@ -37,14 +38,14 @@ module ActionDispatch
             pos += 1
 
             if (token = STATIC_TOKENS[string.getbyte(start_index)])
-              tt.move(state, string, token, start_index, false)
+              tt.move(state, continuous_state, string, token, start_index, false)
             else
               while pos < eos && STATIC_TOKENS[string.getbyte(pos)].nil?
                 pos += 1
               end
 
               token = string.byteslice(start_index, pos - start_index)
-              tt.move(state, string, token, start_index, true)
+              tt.move(state, continuous_state, string, token, start_index, true)
             end
           end
 
@@ -52,13 +53,11 @@ module ActionDispatch
           states_count = state.size
           i = 0
           while i < states_count
-            if state[i + 1].nil?
-              s = state[i]
-              if tt.accepting?(s)
-                acceptance_states.concat(tt.memo(s))
-              end
+            s = state[i]
+            if tt.accepting?(s)
+              acceptance_states.concat(tt.memo(s))
             end
-            i += 2
+            i += 1
           end
 
           acceptance_states.empty? ? yield : acceptance_states

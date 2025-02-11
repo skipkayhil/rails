@@ -47,24 +47,22 @@ module ActionDispatch
           Array(t)
         end
 
-        def move(t, full_string, token, start_index, token_matches_default)
+        def move(t, continuous_t, full_string, token, start_index, token_matches_default)
           transitions_count = t.size
+          continuous_transitions_count = continuous_t.size
           i = 0
           while i < transitions_count
             s = t.shift
-            previous_start = t.shift
-            if previous_start.nil?
-              # In the simple case of a "default" param regex do this fast-path and add all
-              # next states.
-              if token_matches_default && std_state = @stdparam_states[s]
-                t << std_state << nil
-              end
+            # In the simple case of a "default" param regex do this fast-path and add all
+            # next states.
+            if token_matches_default && std_state = @stdparam_states[s]
+              t << std_state
+            end
 
-              # When we have a literal string, we can just pull the next state
-              if states = @string_states[s]
-                state = states[token]
-                t << state << nil unless state.nil?
-              end
+            # When we have a literal string, we can just pull the next state
+            if states = @string_states[s]
+              state = states[token]
+              t << state unless state.nil?
             end
 
             # For regexes that aren't the "default" style, they may potentially not be
@@ -72,23 +70,36 @@ module ActionDispatch
             # match this regexp as well as any successful paths that continue out of it.
             # both paths could be valid.
             if states = @regexp_states[s]
-              slice_start = if previous_start.nil?
-                start_index
-              else
-                previous_start
-              end
-
-              slice_length = start_index + token.length - slice_start
-              curr_slice = full_string.slice(slice_start, slice_length)
-
               states.each { |re, v|
                 # if we match, we can try moving past this
-                t << v << nil if !v.nil? && re.match?(curr_slice)
+                t << v if re.match?(token)
               }
 
               # and regardless, we must continue accepting tokens and retrying this regexp. we
               # need to remember where we started as well so we can take bigger slices.
-              t << s << slice_start
+              continuous_t << s << slice_start
+            end
+
+            i += 2
+          end
+
+          i = 0
+          while i < continuous_transitions_count
+            s = continuous_t.shift
+            previous_start = continuous_t.shift
+
+            if states = @regexp_states[s]
+              slice_length = start_index + token.length - previous_start
+              curr_slice = full_string.slice(previous_start, slice_length)
+
+              states.each { |re, v|
+                # if we match, we can try moving past this
+                t << v if re.match?(curr_slice)
+              }
+
+              # and regardless, we must continue accepting tokens and retrying this regexp. we
+              # need to remember where we started as well so we can take bigger slices.
+              continuous_t << s << previous_start
             end
 
             i += 2
