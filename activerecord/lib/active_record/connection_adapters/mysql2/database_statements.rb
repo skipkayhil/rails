@@ -4,6 +4,18 @@ module ActiveRecord
   module ConnectionAdapters
     module Mysql2
       module DatabaseStatements
+        def to_sql_and_binds(arel_or_sql_string, binds = [], preparable = nil, allow_retry = false) # :nodoc:
+          _sql, _binds, s_preparable, _ = result = super
+
+          if prepared_statements && !s_preparable
+            unprepared_statement do
+              super
+            end
+          else
+            result
+          end
+        end
+
         # Returns an ActiveRecord::Result instance.
         def select_all(*, **) # :nodoc:
           if ExplainRegistry.collect? && prepared_statements
