@@ -6,6 +6,7 @@ require_relative "object/duplicable"
 require_relative "object/deep_dup"
 require_relative "object/try"
 require_relative "object/inclusion"
+require_relative "object/inspect"
 
 require_relative "object/conversions"
 require_relative "object/instance_variables"
